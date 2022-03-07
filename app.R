@@ -3,6 +3,7 @@ library(shiny)
 library(tidyverse)
 library(ggchicklet)
 library(bslib)
+library(scales)
 
 ### STYLING ###
 gold  <- "#c39f5e"
@@ -44,7 +45,7 @@ server <- function(input, output) {
                               radius = grid::unit(8, "pt"),
                               width=.7) +
                 ylim(c(0,120)) +
-                geom_text(data=df,aes(x = Navn, y = Score, label = Score),
+                geom_text(data=df,aes(x = Navn, y = Score, label = scales::percent(Score, scale=1)),
                           colour="white", size=10, hjust=-.2) +
                 coord_flip() +
                 theme_void() +
