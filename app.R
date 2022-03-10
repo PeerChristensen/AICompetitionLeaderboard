@@ -19,26 +19,26 @@ ui <- fluidPage(theme=theme,
     titlePanel("Leaderboard"),
         mainPanel(
            plotOutput("leaderboard",height = "650px", width = "100%")
-        ),
-        column(12, actionButton("refresh", "Refresh"),
-               align = "center",
-               style = "margin-top: 50px;")
+        )
 )
 
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
     
-    observeEvent(input$refresh, {
+    autoInvalidate <- reactiveTimer(60*1000) # every 60 seconds
+    
     
     output$leaderboard <- renderPlot({
+        
+        autoInvalidate()
         
         df <- read_csv2("Leaderboard.csv") %>%
             arrange(desc(Score)) %>%
             mutate(rank=row_number()) %>%
             mutate(Navn = paste0(rank,".  ",Navn)) %>%
             slice(1:15)
-            
+        
         df %>%
             ggplot(aes(reorder(Navn,-rank), Score)) +
                 geom_chicklet(fill=gold,colour=gold,
@@ -53,10 +53,8 @@ server <- function(input, output) {
                   axis.text.y = element_text(size=22, colour="white"),
                   plot.margin = margin(1, 1, 1, 5, "cm"),)
         
-            
         
     },height = 600, width = 1300)
-    })
 }
 
 # Run the application 
