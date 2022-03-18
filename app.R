@@ -4,6 +4,12 @@ library(tidyverse)
 library(ggchicklet)
 library(bslib)
 library(scales)
+library(AzureStor)
+
+readRenviron(".Renviron")
+sas_token <- Sys.getenv("SAS_TOKEN")
+endpoint <- storage_endpoint("https://demoeventstorage.blob.core.windows.net", sas=sas_token)
+container <- storage_container(endpoint, "aicompetition")
 
 ### STYLING ###
 gold  <- "#c39f5e"
@@ -26,26 +32,29 @@ ui <- fluidPage(theme=theme,
 # Define server logic required to draw a histogram
 server <- function(input, output) {
     
-    autoInvalidate <- reactiveTimer(60*1000) # every 60 seconds
+    autoInvalidate <- reactiveTimer(10*1000) # every 60 seconds
     
     
     output$leaderboard <- renderPlot({
         
         autoInvalidate()
         
-        df <- read_csv2("Leaderboard.csv") %>%
-            arrange(desc(Score)) %>%
+        # get data from blob storage
+        storage_download(container, "leaderboard/leaderboard.csv","leaderboard.csv",overwrite=T)
+        
+        df <- read_csv("leaderboard.csv") %>%
+            arrange(desc(score)) %>%
             mutate(rank=row_number()) %>%
-            mutate(Navn = paste0(rank,".  ",Navn)) %>%
+            mutate(Navn = paste0(rank,".  ",initials)) %>%
             slice(1:15)
         
         df %>%
-            ggplot(aes(reorder(Navn,-rank), Score)) +
+            ggplot(aes(reorder(Navn,-rank), score)) +
                 geom_chicklet(fill=gold,colour=gold,
                               radius = grid::unit(8, "pt"),
                               width=.7) +
                 ylim(c(0,120)) +
-                geom_text(data=df,aes(x = Navn, y = Score, label = scales::percent(Score, scale=1)),
+                geom_text(data=df,aes(x = Navn, y = score, label = scales::percent(score, scale=1)),
                           colour="white", size=10, hjust=-.2) +
                 coord_flip() +
                 theme_void() +
