@@ -1,7 +1,6 @@
 
 library(shiny)
 library(tidyverse)
-library(ggchicklet)
 library(bslib)
 library(scales)
 library(AzureStor)
@@ -43,24 +42,30 @@ server <- function(input, output) {
         storage_download(container, "leaderboard/leaderboard.csv","leaderboard.csv",overwrite=T)
         
         df <- read_csv("leaderboard.csv") %>%
+            drop_na() %>%
+            mutate(time = as.POSIXct(time)) %>%
+            group_by(mail) %>%
+            slice_min(time, n = 3) %>%
+            filter(score == max(score)) %>%
+            ungroup() %>%
+            filter(!str_detect(mail,"kapacity")) %>%
             arrange(desc(score)) %>%
-            mutate(rank=row_number()) %>%
-            mutate(Navn = paste0(rank,".  ",initials)) %>%
+            mutate(rank = row_number()) %>%
+            mutate(Navn = paste0(rank,".  ",toupper(initials))) %>%
             slice(1:15)
         
         df %>%
             ggplot(aes(reorder(Navn,-rank), score)) +
-                geom_chicklet(fill=gold,colour=gold,
-                              radius = grid::unit(8, "pt"),
-                              width=.7) +
+                geom_col(width = .6, fill=gold, colour=gold) +
                 ylim(c(0,120)) +
                 geom_text(data=df,aes(x = Navn, y = score, label = scales::percent(score, scale=1)),
                           colour="white", size=10, hjust=-.2) +
                 coord_flip() +
                 theme_void() +
                 theme(plot.background = element_rect(fill="black"),
-                  axis.text.y = element_text(size=22, colour="white"),
-                  plot.margin = margin(1, 1, 1, 5, "cm"),)
+                  axis.text.y = element_text(size = 22, colour = "white", hjust = 0),
+                  plot.margin = margin(1, 1, 1, 5, "cm")
+                  )
         
         
     },height = 600, width = 1300)
