@@ -57,7 +57,7 @@ server <- function(input, output) {
         
         autoInvalidate()
         
-        paste0("Leaderboard - opdateret ", format(as.POSIXct(now()), format = "%H:%M"))
+        paste0("Leaderboard - opdateret ", format(as.POSIXct(now(tzone = "Europe/Copenhagen")), format = "%H:%M"))
         
     })
     
@@ -80,6 +80,7 @@ server <- function(input, output) {
             filter(!str_detect(mail,"kapacity")) %>%
             arrange(desc(score)) %>%
             mutate(rank = row_number()) %>%
+            mutate(initials = str_trunc(initials, 4, ellipsis="")) %>%
             mutate(Navn = paste0(rank,".  ",toupper(initials))) %>%
             slice(1:10)
         
