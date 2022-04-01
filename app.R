@@ -21,7 +21,7 @@ theme <- bs_theme(
 
 
 header_style <- "
-margin-left:130px;
+margin-left:140px;
 padding:1em;
 margin-bottom:-1em;
 margin-top:-1em;
